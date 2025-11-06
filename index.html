@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- Use a stable pdf.js build that exposes `pdfjsLib` and its worker -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>PDF Editor</h1>
+        <p>Kompletní klientská aplikace pro úpravu PDF souborů</p>
+    </header>
+
+    <main>
+        <section id="file-management">
+            <h2>Správa souborů</h2>
+            <input type="file" id="file-input" accept=".pdf" multiple>
+            <!-- New confirm/load button -->
+            <button id="load-files-btn">Načíst soubory</button>
+            <button id="reset-btn">Vymazat vše</button>
+            <div id="file-list"></div>
+        </section>
+
+        <section id="pdf-preview">
+            <h2>Náhled a navigace</h2>
+            <div id="preview-container">
+                <canvas id="pdf-canvas"></canvas>
+                <div id="page-info">Stránka 1 z 1</div>
+                <button id="prev-page">Předchozí</button>
+                <button id="next-page">Další</button>
+            </div>
+        </section>
+
+        <section id="edit-tools">
+            <h2>Úpravy PDF</h2>
+            <div id="text-tool">
+                <input type="text" id="text-input" placeholder="Zadejte text">
+                <input type="number" id="font-size" placeholder="Velikost fontu" value="12">
+                <button id="add-text-btn">Přidat text</button>
+            </div>
+            <button id="delete-page-btn">Smazat stránku</button>
+            <button id="rotate-page-btn">Otočit stránku</button>
+            <button id="save-pdf-btn">Uložit PDF</button>
+        </section>
+
+        <section id="merge-tools">
+            <h2>Kombinace PDF</h2>
+            <div id="merge-list"></div>
+            <button id="merge-btn">Spojit vybrané PDF</button>
+        </section>
+
+        <section id="advanced-tools">
+            <h2>Rozšířené funkce</h2>
+            <button id="export-txt-btn">Exportovat jako TXT</button>
+            <input type="file" id="image-input" accept="image/*" multiple>
+            <button id="convert-images-btn">Konvertovat obrázky na PDF</button>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

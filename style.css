@@ -1,0 +1,77 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+h2 {
+    margin-top: 0;
+}
+
+#file-list, #merge-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.file-item, .merge-item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-item img {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+}
+
+#preview-container {
+    text-align: center;
+}
+
+#pdf-canvas {
+    border: 1px solid #ddd;
+    max-width: 100%;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 5px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+input[type="file"] {
+    margin-bottom: 10px;
+}
+
+#text-tool {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
