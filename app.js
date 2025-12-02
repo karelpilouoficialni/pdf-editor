@@ -1,4 +1,4 @@
-// Inicializace PDF.js (bezpečně: ověříme, že pdfjsLib existuje)
+//initialization of pdf.js and checking if it exists
 if (window.pdfjsLib) {
     // use a matching worker from the same CDN/version
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -65,7 +65,7 @@ loadFilesBtn.addEventListener('click', async (e) => {
 
 // Small safe stubs if your other functions are not yet implemented
 function updateFileList() {
-    // jednoduchý seznam názvů souborů -- rozšiřte podle potřeby
+    // jednoduchý seznam názvů souborů
     fileList.innerHTML = '';
     pdfDocs.forEach((p, i) => {
         const div = document.createElement('div');
@@ -98,7 +98,7 @@ function updateMergeList() {
 }
 
 async function renderPage() {
-    // Pokud chybí pdf.js, ukončíme
+    // if pdf.js missing, exit
     if (!window.pdfjsLib) {
         console.error('pdfjsLib není dostupný pro vykreslení náhledu.');
         return;
@@ -121,7 +121,6 @@ async function renderPage() {
     pageInfo.textContent = `Stránka ${currentPage} z ${pdf.numPages}`;
 }
 
-// Přidejte další event handlery (prev/next/reset apod.) dle potřeby
 resetBtn.addEventListener('click', () => {
     pdfDocs = [];
     currentDocIndex = 0;
@@ -148,7 +147,6 @@ nextPageBtn.addEventListener('click', async () => {
     await renderPage();
 });
 
-// add text
 addTextBtn.addEventListener('click', async () => {
     const txt = textInput.value.trim();
     const size = parseInt(fontSizeInput.value, 10) || 12;
