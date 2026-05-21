@@ -6,59 +6,196 @@
     <title>PDF Editor</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <!-- Use a stable pdf.js build that exposes `pdfjsLib` and its worker -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
+
+    <div id="toast-container"></div>
+
     <header>
-        <h1>PDF Editor</h1>
-        <p>Kompletní klientská aplikace pro úpravu PDF souborů</p>
+        <div class="header-left">
+            <h1>PDF Editor</h1>
+            <p>Kompletní klientská aplikace pro úpravu PDF souborů</p>
+        </div>
+        <div class="header-right">
+            <button id="theme-toggle" class="icon-btn" title="Přepnout motiv">🌙</button>
+            <button id="undo-btn" class="icon-btn" title="Zpět (Ctrl+Z)">↩</button>
+            <button id="redo-btn" class="icon-btn" title="Znovu (Ctrl+Y)">↪</button>
+        </div>
     </header>
 
     <main>
-        <section id="file-management">
-            <h2>Správa souborů</h2>
-            <input type="file" id="file-input" accept=".pdf" multiple>
-            <!-- New confirm/load button -->
-            <button id="load-files-btn">Načíst soubory</button>
-            <button id="reset-btn">Vymazat vše</button>
-            <div id="file-list"></div>
-        </section>
+        <div class="main-columns">
+            <div class="column-left">
 
-        <section id="pdf-preview">
-            <h2>Náhled a navigace</h2>
-            <div id="preview-container">
-                <canvas id="pdf-canvas"></canvas>
-                <div id="page-info">Stránka 1 z 1</div>
-                <button id="prev-page">Předchozí</button>
-                <button id="next-page">Další</button>
+                <section id="file-management" class="drop-zone">
+                    <div class="section-header">
+                        <span class="section-icon">📂</span>
+                        <h2>Správa souborů</h2>
+                        <span class="section-badge">1</span>
+                    </div>
+                    <p class="section-desc">Nahrajte PDF, se kterými chcete pracovat</p>
+                    <div id="drop-area">
+                        <p>📄 Přetáhněte PDF soubory sem nebo je vyberte</p>
+                        <input type="file" id="file-input" accept=".pdf" multiple>
+                        <label for="file-input" class="file-label">Vybrat soubory</label>
+                    </div>
+                    <div class="btn-row">
+                        <button id="load-files-btn" class="with-hint">
+                            <span class="btn-label">Načíst soubory</span>
+                            <span class="btn-hint">Potvrzení výběru</span>
+                        </button>
+                        <button id="reset-btn" class="btn-danger with-hint">
+                            <span class="btn-label">Vymazat vše</span>
+                            <span class="btn-hint">Smaže všechny nahrané soubory</span>
+                        </button>
+                    </div>
+                    <div id="file-list"></div>
+                    <div id="pdf-info" class="pdf-info"></div>
+                </section>
+
+                <section id="edit-tools">
+                    <div class="section-header">
+                        <span class="section-icon">✏️</span>
+                        <h2>Úpravy stránky</h2>
+                        <span class="section-badge">2</span>
+                    </div>
+                    <p class="section-desc">Upravte právě zobrazenou stránku</p>
+
+                    <div class="tool-group">
+                        <div class="tool-group-label">➕ Přidání textu</div>
+                        <div id="text-tool">
+                            <input type="text" id="text-input" placeholder="Zadejte text">
+                            <div class="text-options">
+                                <label class="opt-label">
+                                    <span>Vel.</span>
+                                    <input type="number" id="font-size" placeholder="Velikost" value="12">
+                                </label>
+                                <label class="opt-label">
+                                    <span>Barva</span>
+                                    <input type="color" id="text-color" value="#000000" title="Barva textu">
+                                </label>
+                            </div>
+                            <button id="add-text-btn" class="with-hint">
+                                <span class="btn-label">Přidat text</span>
+                                <span class="btn-hint">Vloží text na stránku</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-group">
+                        <div class="tool-group-label">🛠 Akce se stránkou</div>
+                        <div class="btn-row">
+                            <button id="delete-page-btn" class="btn-danger with-hint">
+                                <span class="btn-label">Smazat stránku</span>
+                                <span class="btn-hint">Odstraní aktuální stránku</span>
+                            </button>
+                            <button id="rotate-page-btn" class="with-hint">
+                                <span class="btn-label">Otočit stránku</span>
+                                <span class="btn-hint">Otočí o 90° doprava</span>
+                            </button>
+                            <button id="save-pdf-btn" class="btn-success with-hint">
+                                <span class="btn-label">💾 Uložit PDF</span>
+                                <span class="btn-hint">Stáhne upravený soubor</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="merge-tools">
+                    <div class="section-header">
+                        <span class="section-icon">🔗</span>
+                        <h2>Kombinace PDF</h2>
+                        <span class="section-badge">3</span>
+                    </div>
+                    <p class="section-desc">Spojte více PDF dokumentů do jednoho</p>
+                    <div id="merge-list"></div>
+                    <button id="merge-btn" class="with-hint">
+                        <span class="btn-label">Spojit vybrané PDF</span>
+                        <span class="btn-hint">Vytvoří merged.pdf ze zaškrtnutých</span>
+                    </button>
+                </section>
+
+                <section id="advanced-tools">
+                    <div class="section-header">
+                        <span class="section-icon">⚡</span>
+                        <h2>Rozšířené funkce</h2>
+                        <span class="section-badge">4</span>
+                    </div>
+                    <p class="section-desc">Další užitečné nástroje</p>
+
+                    <div class="tool-group">
+                        <div class="tool-group-label">📤 Export</div>
+                        <div class="btn-row">
+                            <button id="export-txt-btn" class="with-hint">
+                                <span class="btn-label">📝 Exportovat jako TXT</span>
+                                <span class="btn-hint">Extrahuje text ze všech stránek</span>
+                            </button>
+                            <button id="split-pdf-btn" class="with-hint">
+                                <span class="btn-label">✂ Rozdělit PDF</span>
+                                <span class="btn-hint">Každou stránku uloží zvlášť</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-group">
+                        <div class="tool-group-label">🖼 Obrázky → PDF</div>
+                        <div class="btn-row">
+                            <input type="file" id="image-input" accept="image/*" multiple>
+                            <label for="image-input" class="file-label">Vybrat obrázky</label>
+                            <button id="convert-images-btn" class="with-hint">
+                                <span class="btn-label">Konvertovat na PDF</span>
+                                <span class="btn-hint">Vytvoří PDF z obrázků</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </section>
 
-        <section id="edit-tools">
-            <h2>Úpravy PDF</h2>
-            <div id="text-tool">
-                <input type="text" id="text-input" placeholder="Zadejte text">
-                <input type="number" id="font-size" placeholder="Velikost fontu" value="12">
-                <button id="add-text-btn">Přidat text</button>
+            <div class="column-right">
+                <section id="pdf-preview">
+                    <div class="preview-header">
+                        <div class="section-header">
+                            <span class="section-icon">👁️</span>
+                            <h2>Náhled</h2>
+                        </div>
+                        <div class="preview-controls">
+                            <button id="zoom-out-btn" class="icon-btn with-hint" title="Oddálit">
+                                🔍−
+                                <span class="btn-hint">Oddálit</span>
+                            </button>
+                            <span id="zoom-level">100%</span>
+                            <button id="zoom-in-btn" class="icon-btn with-hint" title="Přiblížit">
+                                🔍+
+                                <span class="btn-hint">Přiblížit</span>
+                            </button>
+                            <button id="fit-page-btn" class="icon-btn with-hint" title="Přizpůsobit stránce">
+                                ⊞
+                                <span class="btn-hint">Výchozí zoom</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="preview-container">
+                        <div id="canvas-wrapper">
+                            <canvas id="pdf-canvas"></canvas>
+                            <div id="page-loader" class="spinner"></div>
+                        </div>
+                        <div id="page-nav">
+                            <button id="prev-page" class="icon-btn with-hint">
+                                ◀
+                                <span class="btn-hint">Předchozí</span>
+                            </button>
+                            <input type="number" id="page-jump" value="1" min="1">
+                            <span id="page-info">Stránka 1 z 1</span>
+                            <button id="next-page" class="icon-btn with-hint">
+                                ▶
+                                <span class="btn-hint">Další</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
             </div>
-            <button id="delete-page-btn">Smazat stránku</button>
-            <button id="rotate-page-btn">Otočit stránku</button>
-            <button id="save-pdf-btn">Uložit PDF</button>
-        </section>
-
-        <section id="merge-tools">
-            <h2>Kombinace PDF</h2>
-            <div id="merge-list"></div>
-            <button id="merge-btn">Spojit vybrané PDF</button>
-        </section>
-
-        <section id="advanced-tools">
-            <h2>Rozšířené funkce</h2>
-            <button id="export-txt-btn">Exportovat jako TXT</button>
-            <input type="file" id="image-input" accept="image/*" multiple>
-            <button id="convert-images-btn">Konvertovat obrázky na PDF</button>
-        </section>
+        </div>
     </main>
 
     <script src="app.js"></script>
