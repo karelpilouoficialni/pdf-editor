@@ -10,6 +10,7 @@ let undoStack = [];
 let redoStack = [];
 let thumbGenId = 0;
 let isGridView = false;
+let deletionMode = false;
 
 const $ = id => document.getElementById(id);
 const fileInput = $("file-input");
@@ -46,6 +47,7 @@ const redoBtn = $("redo-btn");
 const splitPdfBtn = $("split-pdf-btn");
 const gridView = $("grid-view");
 const gridToggleBtn = $("grid-toggle-btn");
+const deleteModeBtn = $("delete-mode-btn");
 const movePageUp = $("move-page-up");
 const movePageDown = $("move-page-down");
 const addBlankPageBtn = $("add-blank-page-btn");
@@ -282,15 +284,22 @@ async function generateThumbnails() {
             const label = document.createElement("span");
             label.textContent = i;
             div.appendChild(label);
-            div.addEventListener("click", async () => {
-                currentPage = i;
-                isGridView = false;
-                gridToggleBtn.classList.remove("on");
-                gridView.classList.add("hidden");
-                document.getElementById("canvas-wrapper").classList.remove("hidden");
-                document.getElementById("page-nav").classList.remove("hidden");
-                await renderPage();
-                await generateThumbnails();
+            div.addEventListener("click", async (e) => {
+                if (deletionMode) {
+                    cb.checked = !cb.checked;
+                    div.classList.toggle("checked", cb.checked);
+                } else {
+                    currentPage = i;
+                    isGridView = false;
+                    deletionMode = false;
+                    deleteModeBtn.classList.remove("on");
+                    gridToggleBtn.classList.remove("on");
+                    gridView.classList.add("hidden");
+                    document.getElementById("canvas-wrapper").classList.remove("hidden");
+                    document.getElementById("page-nav").classList.remove("hidden");
+                    await renderPage();
+                    await generateThumbnails();
+                }
             });
             gridView.appendChild(div);
         }
@@ -678,6 +687,16 @@ deleteSelectedBtn.addEventListener("click", async () => {
     showToast("Odstraněno " + indices.length + " stránek", "success");
 });
 
+// Deletion mode toggle
+deleteModeBtn.addEventListener("click", () => {
+    if (!isGridView) { showToast("Přepněte nejdříve do zobrazení mřížky.", "info"); return; }
+    deletionMode = !deletionMode;
+    deleteModeBtn.classList.toggle("on", deletionMode);
+    gridView.querySelectorAll(".grid-page").forEach(div => {
+        div.classList.toggle("checked", div.querySelector(".grid-check").checked);
+    });
+});
+
 // Grid view toggle
 gridToggleBtn.addEventListener("click", async () => {
     isGridView = !isGridView;
@@ -690,6 +709,10 @@ gridToggleBtn.addEventListener("click", async () => {
         gridView.classList.remove("hidden");
         await generateThumbnails();
     } else {
+        if (deletionMode) {
+            deletionMode = false;
+            deleteModeBtn.classList.remove("on");
+        }
         gridToggleBtn.classList.remove("on");
         wrapper.classList.remove("hidden");
         pageNav.classList.remove("hidden");

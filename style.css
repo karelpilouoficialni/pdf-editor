@@ -203,6 +203,7 @@ input[type="file"] { font-size: 13px; color: var(--text-secondary); margin: 4px 
 }
 
 #grid-toggle-btn.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+#delete-mode-btn.on { background: var(--danger); color: #fff; border-color: var(--danger); }
 
 #zoom-level {
     font-size: 13px; font-weight: 600;
@@ -269,6 +270,7 @@ input[type="file"] { font-size: 13px; color: var(--text-secondary); margin: 4px 
 
 .grid-page:hover { border-color: var(--primary); }
 .grid-page.active { border-color: var(--primary); background: rgba(79,110,247,0.08); }
+.grid-page.checked { border-color: var(--danger); background: rgba(231,76,60,0.1); }
 
 .grid-page canvas { border-radius: 3px; width: 100%; height: auto; }
 .grid-page span { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
