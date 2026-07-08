@@ -46,6 +46,7 @@ const thumbnails = $("thumbnails");
 const movePageUp = $("move-page-up");
 const movePageDown = $("move-page-down");
 const addBlankPageBtn = $("add-blank-page-btn");
+const deleteSelectedBtn = $("delete-selected-btn");
 const extractPagesBtn = $("extract-pages-btn");
 const extractRange = $("extract-range");
 const insertPdfInput = $("insert-pdf-input");
@@ -255,6 +256,12 @@ async function generateThumbnails() {
             const div = document.createElement("div");
             div.className = "thumbnail-item" + (i === currentPage ? " active" : "");
             div.dataset.page = i;
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.className = "thumb-check";
+            cb.dataset.pageIndex = i - 1;
+            div.appendChild(cb);
+            cb.addEventListener("click", (e) => e.stopPropagation());
             const canvas = document.createElement("canvas");
             canvas.width = 90;
             canvas.height = 120;
@@ -640,6 +647,27 @@ insertPageBtn.addEventListener("click", async () => {
     await renderPage();
     await generateThumbnails();
     showToast("Stránky vloženy", "success");
+});
+
+// Multi-remove selected pages
+deleteSelectedBtn.addEventListener("click", async () => {
+    const current = pdfDocs[currentDocIndex];
+    if (!current) return;
+    const checks = thumbnails.querySelectorAll(".thumb-check:checked");
+    const indices = Array.from(checks).map(cb => parseInt(cb.dataset.pageIndex, 10));
+    if (indices.length === 0) { showToast("Vyberte stránky k odstranění.", "error"); return; }
+    const pdfDoc = current.doc;
+    if (pdfDoc.getPageCount() - indices.length < 1) { showToast("Nelze smazat všechny stránky.", "error"); return; }
+    pushUndo();
+    indices.sort((a, b) => b - a);
+    for (const idx of indices) pdfDoc.removePage(idx);
+    currentPage = Math.min(currentPage, pdfDoc.getPageCount());
+    const bytes = await pdfDoc.save();
+    current.originalBuffer = uint8ToArrayBuffer(bytes);
+    updatePdfInfo();
+    await renderPage();
+    await generateThumbnails();
+    showToast("Odstraněno " + indices.length + " stránek", "success");
 });
 
 // Init

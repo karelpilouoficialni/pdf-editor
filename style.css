@@ -249,7 +249,7 @@ input[type="file"] { font-size: 13px; color: var(--text-secondary); margin: 4px 
 /* Thumbnails */
 #thumbnails {
     display: flex; flex-direction: column; gap: 6px;
-    max-height: 300px; overflow-y: auto;
+    max-height: calc(100vh - 360px); overflow-y: auto;
 }
 
 .thumbnail-item {
@@ -264,6 +264,7 @@ input[type="file"] { font-size: 13px; color: var(--text-secondary); margin: 4px 
 
 .thumbnail-item canvas { border-radius: 3px; }
 .thumbnail-item span { font-size: 12px; color: var(--text-secondary); }
+.thumb-check { margin-left: 2px; cursor: pointer; accent-color: var(--primary); }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; }
