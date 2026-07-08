@@ -8,6 +8,7 @@ let currentPage = 1;
 let zoom = 1.0;
 let undoStack = [];
 let redoStack = [];
+let thumbGenId = 0;
 
 const $ = id => document.getElementById(id);
 const fileInput = $("file-input");
@@ -105,7 +106,9 @@ undoBtn.addEventListener("click", async () => {
     current.originalBuffer = undoStack.pop();
     current.doc = await PDFLib.PDFDocument.load(current.originalBuffer);
     updateUndoButtons();
+    updatePdfInfo();
     await renderPage();
+    await generateThumbnails();
     showToast("Vráceno zpět", "info");
 });
 
@@ -116,7 +119,9 @@ redoBtn.addEventListener("click", async () => {
     current.originalBuffer = redoStack.pop();
     current.doc = await PDFLib.PDFDocument.load(current.originalBuffer);
     updateUndoButtons();
+    updatePdfInfo();
     await renderPage();
+    await generateThumbnails();
     showToast("Obnoveno", "info");
 });
 
@@ -187,7 +192,7 @@ function updateFileList() {
         const div = document.createElement("div");
         div.className = "file-item" + (i === currentDocIndex ? " active" : "");
         div.innerHTML = "<span class=\"file-icon\">📄</span><span class=\"file-name\">" + p.name + "</span><span class=\"file-size\">" + formatSize(p.size) + "</span>";
-        div.addEventListener("click", () => {
+        div.addEventListener("click", async () => {
             currentDocIndex = i;
             currentPage = 1;
             undoStack = [];
@@ -195,8 +200,8 @@ function updateFileList() {
             updateUndoButtons();
             updateFileList();
             updatePdfInfo();
-            renderPage();
-            generateThumbnails();
+            await renderPage();
+            await generateThumbnails();
         });
         fileList.appendChild(div);
     });
@@ -225,7 +230,7 @@ async function renderPage() {
     if (!window.pdfjsLib) return;
     if (!pdfDocs[currentDocIndex]) return;
     showSpinner();
-    const arrayBuffer = pdfDocs[currentDocIndex].originalBuffer;
+    const arrayBuffer = pdfDocs[currentDocIndex].originalBuffer.slice(0);
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
     const pdf = await loadingTask.promise;
     if (currentPage < 1) currentPage = 1;
@@ -246,13 +251,15 @@ async function renderPage() {
 }
 
 async function generateThumbnails() {
+    const genId = ++thumbGenId;
     thumbnails.innerHTML = "";
     const current = pdfDocs[currentDocIndex];
     if (!current || !window.pdfjsLib) return;
     try {
-        const loadingTask = pdfjsLib.getDocument({ data: current.originalBuffer });
+        const loadingTask = pdfjsLib.getDocument({ data: current.originalBuffer.slice(0) });
         const pdf = await loadingTask.promise;
         for (let i = 1; i <= pdf.numPages; i++) {
+            if (genId !== thumbGenId) return;
             const div = document.createElement("div");
             div.className = "thumbnail-item" + (i === currentPage ? " active" : "");
             div.dataset.page = i;
@@ -267,16 +274,18 @@ async function generateThumbnails() {
             canvas.height = 120;
             const ctx = canvas.getContext("2d");
             const page = await pdf.getPage(i);
+            if (genId !== thumbGenId) return;
             const viewport = page.getViewport({ scale: 0.3 });
             await page.render({ canvasContext: ctx, viewport }).promise;
+            if (genId !== thumbGenId) return;
             div.appendChild(canvas);
             const label = document.createElement("span");
             label.textContent = i;
             div.appendChild(label);
-            div.addEventListener("click", () => {
+            div.addEventListener("click", async () => {
                 currentPage = i;
-                renderPage();
-                generateThumbnails();
+                await renderPage();
+                await generateThumbnails();
             });
             thumbnails.appendChild(div);
         }
@@ -293,16 +302,16 @@ function highlightCurrentThumbnail() {
 }
 
 // Zoom
-zoomInBtn.addEventListener("click", () => { zoom = Math.min(3, zoom + 0.15); renderPage(); });
-zoomOutBtn.addEventListener("click", () => { zoom = Math.max(0.25, zoom - 0.15); renderPage(); });
-fitPageBtn.addEventListener("click", () => { zoom = 1.0; renderPage(); });
+zoomInBtn.addEventListener("click", async () => { zoom = Math.min(3, zoom + 0.15); await renderPage(); });
+zoomOutBtn.addEventListener("click", async () => { zoom = Math.max(0.25, zoom - 0.15); await renderPage(); });
+fitPageBtn.addEventListener("click", async () => { zoom = 1.0; await renderPage(); });
 
 pageJump.addEventListener("change", async () => {
     if (!pdfDocs[currentDocIndex]) return;
-    const loadingTask = pdfjsLib.getDocument({ data: pdfDocs[currentDocIndex].originalBuffer });
+    const loadingTask = pdfjsLib.getDocument({ data: pdfDocs[currentDocIndex].originalBuffer.slice(0) });
     const pdf = await loadingTask.promise;
     const val = parseInt(pageJump.value, 10);
-    if (val >= 1 && val <= pdf.numPages) { currentPage = val; await renderPage(); }
+    if (val >= 1 && val <= pdf.numPages) { currentPage = val; await renderPage(); await generateThumbnails(); }
     else { pageJump.value = currentPage; showToast("Neplatné číslo stránky", "error"); }
 });
 
@@ -330,14 +339,16 @@ prevPageBtn.addEventListener("click", async () => {
     if (!pdfDocs[currentDocIndex]) return;
     currentPage = Math.max(1, currentPage - 1);
     await renderPage();
+    await generateThumbnails();
 });
 
 nextPageBtn.addEventListener("click", async () => {
     if (!pdfDocs[currentDocIndex]) return;
-    const loadingTask = pdfjsLib.getDocument({ data: pdfDocs[currentDocIndex].originalBuffer });
+    const loadingTask = pdfjsLib.getDocument({ data: pdfDocs[currentDocIndex].originalBuffer.slice(0) });
     const pdf = await loadingTask.promise;
     currentPage = Math.min(pdf.numPages, currentPage + 1);
     await renderPage();
+    await generateThumbnails();
 });
 
 addTextBtn.addEventListener("click", async () => {
@@ -390,6 +401,7 @@ rotatePageBtn.addEventListener("click", async () => {
     const bytes = await pdfDoc.save();
     current.originalBuffer = uint8ToArrayBuffer(bytes);
     await renderPage();
+    await generateThumbnails();
     showToast("Stránka otočena", "success");
 });
 
@@ -436,7 +448,7 @@ mergeBtn.addEventListener("click", async () => {
 exportTxtBtn.addEventListener("click", async () => {
     const current = pdfDocs[currentDocIndex];
     if (!current) return;
-    const loadingTask = pdfjsLib.getDocument({ data: current.originalBuffer });
+    const loadingTask = pdfjsLib.getDocument({ data: current.originalBuffer.slice(0) });
     const pdf = await loadingTask.promise;
     let fullText = "";
     for (let i = 1; i <= pdf.numPages; i++) {
