@@ -103,10 +103,6 @@
                     </div>
                 </section>
 
-                <section>
-                    <h2>📄 Náhledy stránek</h2>
-                    <div id="thumbnails"></div>
-                </section>
             </aside>
 
             <div class="content">
@@ -118,11 +114,15 @@
                             <button id="zoom-in-btn" class="icon-btn" title="Přiblížit">🔍+</button>
                             <button id="fit-page-btn" class="icon-btn" title="Výchozí zoom">⊞</button>
                         </div>
+                        <div class="toolbar-group">
+                            <button id="grid-toggle-btn" class="icon-btn" title="Zobrazení mřížky">⊟</button>
+                        </div>
                     </div>
                     <div id="canvas-wrapper">
                         <canvas id="pdf-canvas"></canvas>
                         <div id="page-loader" class="spinner"></div>
                     </div>
+                    <div id="grid-view" class="hidden"></div>
                     <div id="page-nav">
                         <button id="prev-page" class="icon-btn">◀</button>
                         <input type="number" id="page-jump" value="1" min="1" />

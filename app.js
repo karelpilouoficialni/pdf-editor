@@ -9,6 +9,7 @@ let zoom = 1.0;
 let undoStack = [];
 let redoStack = [];
 let thumbGenId = 0;
+let isGridView = false;
 
 const $ = id => document.getElementById(id);
 const fileInput = $("file-input");
@@ -43,7 +44,8 @@ const spinner = $("page-loader");
 const undoBtn = $("undo-btn");
 const redoBtn = $("redo-btn");
 const splitPdfBtn = $("split-pdf-btn");
-const thumbnails = $("thumbnails");
+const gridView = $("grid-view");
+const gridToggleBtn = $("grid-toggle-btn");
 const movePageUp = $("move-page-up");
 const movePageDown = $("move-page-down");
 const addBlankPageBtn = $("add-blank-page-btn");
@@ -169,7 +171,6 @@ async function loadFiles(files) {
         currentDocIndex = 0;
         currentPage = 1;
         await renderPage();
-        await generateThumbnails();
     }
 }
 
@@ -247,12 +248,11 @@ async function renderPage() {
     pageJump.max = pdf.numPages;
     zoomLevel.textContent = Math.round(zoom * 100) + "%";
     hideSpinner();
-    highlightCurrentThumbnail();
 }
 
 async function generateThumbnails() {
     const genId = ++thumbGenId;
-    thumbnails.innerHTML = "";
+    gridView.innerHTML = "";
     const current = pdfDocs[currentDocIndex];
     if (!current || !window.pdfjsLib) return;
     try {
@@ -261,21 +261,21 @@ async function generateThumbnails() {
         for (let i = 1; i <= pdf.numPages; i++) {
             if (genId !== thumbGenId) return;
             const div = document.createElement("div");
-            div.className = "thumbnail-item" + (i === currentPage ? " active" : "");
+            div.className = "grid-page" + (i === currentPage ? " active" : "");
             div.dataset.page = i;
             const cb = document.createElement("input");
             cb.type = "checkbox";
-            cb.className = "thumb-check";
+            cb.className = "grid-check";
             cb.dataset.pageIndex = i - 1;
             div.appendChild(cb);
             cb.addEventListener("click", (e) => e.stopPropagation());
             const canvas = document.createElement("canvas");
-            canvas.width = 90;
-            canvas.height = 120;
+            canvas.width = 150;
+            canvas.height = 200;
             const ctx = canvas.getContext("2d");
             const page = await pdf.getPage(i);
             if (genId !== thumbGenId) return;
-            const viewport = page.getViewport({ scale: 0.3 });
+            const viewport = page.getViewport({ scale: 0.5 });
             await page.render({ canvasContext: ctx, viewport }).promise;
             if (genId !== thumbGenId) return;
             div.appendChild(canvas);
@@ -284,21 +284,19 @@ async function generateThumbnails() {
             div.appendChild(label);
             div.addEventListener("click", async () => {
                 currentPage = i;
+                isGridView = false;
+                gridToggleBtn.classList.remove("on");
+                gridView.classList.add("hidden");
+                document.getElementById("canvas-wrapper").classList.remove("hidden");
+                document.getElementById("page-nav").classList.remove("hidden");
                 await renderPage();
                 await generateThumbnails();
             });
-            thumbnails.appendChild(div);
+            gridView.appendChild(div);
         }
     } catch (e) {
-        thumbnails.innerHTML = "<span style='color:var(--text-secondary);font-size:12px;'>Chyba načtení náhledů</span>";
+        gridView.innerHTML = "<span style='color:var(--text-secondary);font-size:12px;'>Chyba načtení náhledů</span>";
     }
-}
-
-function highlightCurrentThumbnail() {
-    const items = thumbnails.querySelectorAll(".thumbnail-item");
-    items.forEach((item, i) => {
-        item.classList.toggle("active", (i + 1) === currentPage);
-    });
 }
 
 // Zoom
@@ -311,7 +309,7 @@ pageJump.addEventListener("change", async () => {
     const loadingTask = pdfjsLib.getDocument({ data: pdfDocs[currentDocIndex].originalBuffer.slice(0) });
     const pdf = await loadingTask.promise;
     const val = parseInt(pageJump.value, 10);
-    if (val >= 1 && val <= pdf.numPages) { currentPage = val; await renderPage(); await generateThumbnails(); }
+    if (val >= 1 && val <= pdf.numPages) { currentPage = val; await renderPage(); }
     else { pageJump.value = currentPage; showToast("Neplatné číslo stránky", "error"); }
 });
 
@@ -327,7 +325,7 @@ resetBtn.addEventListener("click", () => {
     fileList.innerHTML = "";
     mergeList.innerHTML = "";
     pdfInfo.innerHTML = "";
-    thumbnails.innerHTML = "";
+    gridView.innerHTML = "";
     const ctx = pdfCanvas.getContext("2d");
     ctx.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
     pageInfo.textContent = "Stránka 0 z 0";
@@ -339,7 +337,6 @@ prevPageBtn.addEventListener("click", async () => {
     if (!pdfDocs[currentDocIndex]) return;
     currentPage = Math.max(1, currentPage - 1);
     await renderPage();
-    await generateThumbnails();
 });
 
 nextPageBtn.addEventListener("click", async () => {
@@ -348,7 +345,6 @@ nextPageBtn.addEventListener("click", async () => {
     const pdf = await loadingTask.promise;
     currentPage = Math.min(pdf.numPages, currentPage + 1);
     await renderPage();
-    await generateThumbnails();
 });
 
 addTextBtn.addEventListener("click", async () => {
@@ -665,7 +661,7 @@ insertPageBtn.addEventListener("click", async () => {
 deleteSelectedBtn.addEventListener("click", async () => {
     const current = pdfDocs[currentDocIndex];
     if (!current) return;
-    const checks = thumbnails.querySelectorAll(".thumb-check:checked");
+    const checks = gridView.querySelectorAll(".grid-check:checked");
     const indices = Array.from(checks).map(cb => parseInt(cb.dataset.pageIndex, 10));
     if (indices.length === 0) { showToast("Vyberte stránky k odstranění.", "error"); return; }
     const pdfDoc = current.doc;
@@ -680,6 +676,26 @@ deleteSelectedBtn.addEventListener("click", async () => {
     await renderPage();
     await generateThumbnails();
     showToast("Odstraněno " + indices.length + " stránek", "success");
+});
+
+// Grid view toggle
+gridToggleBtn.addEventListener("click", async () => {
+    isGridView = !isGridView;
+    const wrapper = document.getElementById("canvas-wrapper");
+    const pageNav = document.getElementById("page-nav");
+    if (isGridView) {
+        gridToggleBtn.classList.add("on");
+        wrapper.classList.add("hidden");
+        pageNav.classList.add("hidden");
+        gridView.classList.remove("hidden");
+        await generateThumbnails();
+    } else {
+        gridToggleBtn.classList.remove("on");
+        wrapper.classList.remove("hidden");
+        pageNav.classList.remove("hidden");
+        gridView.classList.add("hidden");
+        await renderPage();
+    }
 });
 
 // Init
