@@ -143,16 +143,24 @@ dropArea.addEventListener("dragleave", () => { dropArea.classList.remove("dragov
 dropArea.addEventListener("drop", async (e) => {
     e.preventDefault();
     dropArea.classList.remove("dragover");
-    const files = Array.from(e.dataTransfer.files).filter(f => f.type === "application/pdf");
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf"));
     if (files.length === 0) { showToast("Přetáhněte pouze PDF soubory", "error"); return; }
     await loadFiles(files);
 });
 
 // Load files
+fileInput.addEventListener("change", async () => {
+    const files = Array.from(fileInput.files || []);
+    if (files.length === 0) return;
+    await loadFiles(files);
+    fileInput.value = "";
+});
+
 loadFilesBtn.addEventListener("click", async () => {
     const files = Array.from(fileInput.files || []);
     if (files.length === 0) { showToast("Nevybrali jste žádné soubory.", "error"); return; }
     await loadFiles(files);
+    fileInput.value = "";
 });
 
 async function loadFiles(files) {
