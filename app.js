@@ -230,6 +230,10 @@ function updateMergeList() {
         const label = document.createElement("span");
         label.textContent = p.name;
         div.appendChild(label);
+        div.addEventListener("click", (e) => {
+            if (e.target === chk) return;
+            chk.checked = !chk.checked;
+        });
         mergeList.appendChild(div);
     });
 }

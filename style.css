@@ -177,6 +177,9 @@ input[type="file"] { font-size: 13px; color: var(--text-secondary); margin: 4px 
 .file-item:hover, .merge-item:hover { border-color: var(--primary); }
 .file-item.active { border-color: var(--primary); background: rgba(79,110,247,0.08); }
 
+.merge-item input[type="checkbox"] { cursor: pointer; accent-color: var(--primary); }
+.merge-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+
 .file-item .file-name { font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .file-item .file-size { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
 .file-item .file-icon { font-size: 20px; }
